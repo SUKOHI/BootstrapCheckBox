@@ -8,6 +8,7 @@ import android.content.res.TypedArray;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -15,7 +16,7 @@ import android.widget.TextView;
 import com.beardedhen.androidbootstrap.FontAwesomeText;
 import com.beardedhen.androidbootstrap.R;
 
-public class FontAwesomeCheckBox extends LinearLayout {
+public class BootstrapCheckBox extends LinearLayout {
 
 	private Context context;
 	private View layout;
@@ -23,6 +24,7 @@ public class FontAwesomeCheckBox extends LinearLayout {
 	private TextView labelTextView;
 	private static Map<String, Integer> typeColorMap;
 	private boolean currentChecked = false;
+	private TYPE_COLOR currentTypeColor;
 	
 	static {
 
@@ -37,13 +39,37 @@ public class FontAwesomeCheckBox extends LinearLayout {
 		
 	}
 	
-	public FontAwesomeCheckBox(Context context, AttributeSet attrs) {
+	private enum TYPE_COLOR {
+		
+		DEFAULT("default", R.color.bbutton_default, R.color.bbutton_default_pressed), 
+		PRIMARY("primary", R.color.bbutton_primary, R.color.bbutton_primary_pressed), 
+		SUCCESS("success", R.color.bbutton_success, R.color.bbutton_success_pressed), 
+		INFO("info", R.color.bbutton_info, R.color.bbutton_info_pressed), 
+		WARNING("warning", R.color.bbutton_warning, R.color.bbutton_warning_pressed), 
+		DANGER("danger", R.color.bbutton_danger, R.color.bbutton_danger_pressed), 
+		INVERSE("inverse", R.color.bbutton_inverse, R.color.bbutton_inverse_pressed);
+
+		private String symbol;
+		private int defaultColorResourceId;
+		private int pressedColorResourceId;
+		
+		private TYPE_COLOR(String symbol, int defaultColorResourceId, int pressedColorResourceId) {
+			
+			this.symbol = symbol;
+			this.defaultColorResourceId = defaultColorResourceId;
+			this.pressedColorResourceId = pressedColorResourceId;
+			
+		}
+		
+	}
+	
+	public BootstrapCheckBox(Context context, AttributeSet attrs) {
 		super(context, attrs);
 		this.context = context;
 		initialize(attrs);
 	}
 
-	public FontAwesomeCheckBox(Context context) {
+	public BootstrapCheckBox(Context context) {
 		super(context);
 		this.context = context;
 		initialize(null);
@@ -59,7 +85,7 @@ public class FontAwesomeCheckBox extends LinearLayout {
 		
 		//defaults
 		
-		String bootstrapType = "default";
+		currentTypeColor = TYPE_COLOR.INVERSE;
 		String label = "";
 		float textSize = 16.0f;
 		boolean checked = false;
@@ -67,7 +93,8 @@ public class FontAwesomeCheckBox extends LinearLayout {
 		//attribute values
 		
 		if (a.getString(R.styleable.FontAwesomeCheckBox_fc_type) != null) {
-			bootstrapType = a.getString(R.styleable.FontAwesomeCheckBox_fc_type);
+			String bootstrapType = a.getString(R.styleable.FontAwesomeCheckBox_fc_type);
+			setType(bootstrapType);
 		}
 
 		if(a.getString(R.styleable.FontAwesomeCheckBox_fc_text) != null) {
@@ -82,26 +109,50 @@ public class FontAwesomeCheckBox extends LinearLayout {
 			checked = a.getBoolean(R.styleable.FontAwesomeCheckBox_fc_checked, false);
 		}
 		
-		int typeColor = getResources().getColor(typeColorMap.get(bootstrapType));
 		a.recycle();
 		
 		setText(label);
 		setTextSize(textSize);
 		setChecked(checked);
-
-		labelTextView.setTextColor(typeColor);
-		fontAwesomeTextChecked.setTextColor(typeColor);
-		fontAwesomeTextUnchecked.setTextColor(typeColor);
-		layout.setOnClickListener(new OnClickListener() {
+		setTypeColor(currentTypeColor.defaultColorResourceId);
+		
+		layout.setOnTouchListener(new OnTouchListener() {
 			
 			@Override
-			public void onClick(View v) {
+			public boolean onTouch(View v, MotionEvent event) {
 				
-				setChecked(!currentChecked);
+				switch (event.getAction()) {
+				
+				case MotionEvent.ACTION_DOWN:
+					setChecked(!currentChecked);
+					setTypeColor(currentTypeColor.pressedColorResourceId);
+					break;
+					
+				default:
+					setTypeColor(currentTypeColor.defaultColorResourceId);
+					break;
+					
+				}
+				
+				return true;
 				
 			}
 			
 		});
+		
+	}
+	
+	public void setType(String bootstrapType) {
+		
+		for (TYPE_COLOR typeColor : TYPE_COLOR.values()) {
+			
+			if(bootstrapType.equals(typeColor.symbol)) {
+
+				currentTypeColor = typeColor;
+				
+			}
+			
+		}
 		
 	}
 	
@@ -144,6 +195,15 @@ public class FontAwesomeCheckBox extends LinearLayout {
 	public boolean isChecked() {
 		
 		return (currentChecked);
+		
+	}
+	
+	public void setTypeColor(int colorResourceId) {
+
+		int color = getResources().getColor(colorResourceId);
+		labelTextView.setTextColor(color);
+		fontAwesomeTextChecked.setTextColor(color);
+		fontAwesomeTextUnchecked.setTextColor(color);
 		
 	}
 	
